@@ -1,5 +1,7 @@
 const cohortName = process.argv[2];
-const limitBy = process.argv[3];
+const limitBy = process.argv[3] || 5;
+
+const values = [`%${cohortName}%`, limitBy];
 
 const { Pool } = require('pg');
 
@@ -18,10 +20,9 @@ pool.connect( () => {
 pool.query(`
 SELECT students.id, students.name, cohort_id, cohorts.name as cohort_name
 FROM students JOIN cohorts ON cohorts.id = cohort_id
-GROUP BY students.id, cohorts.name
-HAVING cohorts.name LIKE '%${cohortName}%'
-LIMIT ${limitBy || 5};
-`)
+WHERE cohorts.name LIKE $1
+LIMIT $2;
+`, values)
 .then(res => {
   res.rows.forEach(user => {
     console.log(`${user.name} has an id of ${user.id} and was in ${user.cohort_name} cohort`)
